@@ -45,7 +45,6 @@ public class MainStage extends Stage {
         commandPage = new CommandPage(client);
         commandPage.addRefreshCallback(this::refreshAll);
 
-        // Верхняя панель
         HBox topPanel = new HBox(10);
         topPanel.setStyle("-fx-padding: 10; -fx-background-color: #e0e0e0;");
 
@@ -94,7 +93,6 @@ public class MainStage extends Stage {
 
         langMenu.getItems().addAll(ruItem, roItem, ukItem, esItem);
 
-        // Вкладки
         tabTable.setContent(tablePage);
         tabTable.setUserData("tab.table");
         tabTable.setClosable(false);
@@ -111,7 +109,6 @@ public class MainStage extends Stage {
         root.setCenter(tabPane);
         setScene(new Scene(root, 1000, 700));
 
-        // Применяем начальную локализацию и тексты вкладок
         updateTabTexts();
         i18n.updateAllTexts(getScene().getRoot());
     }
@@ -214,7 +211,6 @@ public class MainStage extends Stage {
         tablePage.updateContextMenuText();
         refreshDataOnce();
 
-        // Новый ImageView для кнопки, чтобы не забирать из пункта меню
         ImageView newFlagView = new ImageView(flagImage);
         newFlagView.setFitWidth(24);
         newFlagView.setFitHeight(24);

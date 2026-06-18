@@ -13,7 +13,6 @@ public class JavaFXMain extends Application {
     public void start(Stage primaryStage) {
         client = new NetworkClient("localhost", 8047);
 
-        // Сразу пытаемся подключиться
         new Thread(() -> {
             try {
                 client.connect();

@@ -28,11 +28,10 @@ public class CommandPage extends VBox {
     private final List<Runnable> refreshCallbacks = new ArrayList<>();
 
     private final List<String> historyInputs = new ArrayList<>();
-    private int historyIndex = -1;              // индекс в historyInputs
-    private int historyViewIndex = -1;         // индекс текущей выделенной строки в historyView
+    private int historyIndex = -1;
+    private int historyViewIndex = -1;
     private boolean navigating = false;
 
-    // Ссылка на текущий список билетов (для update)
     private List<Map<String, Object>> currentTickets = new ArrayList<>();
 
     private I18nManager i18n = I18nManager.getInstance();
@@ -42,7 +41,6 @@ public class CommandPage extends VBox {
         setPadding(new Insets(10));
         setSpacing(10);
 
-        // Локализация кнопки и плейсхолдера
         sendButton.setUserData("button.send");
         commandField.setUserData("prompt.command");
         I18nManager i18n = I18nManager.getInstance();
@@ -79,7 +77,6 @@ public class CommandPage extends VBox {
         refreshCallbacks.add(callback);
     }
 
-    /** Устанавливает актуальный список билетов (для поиска по id при update) */
     public void setCurrentTickets(List<Map<String, Object>> tickets) {
         this.currentTickets = tickets;
     }
@@ -88,7 +85,6 @@ public class CommandPage extends VBox {
         String input = commandField.getText().trim();
         if (input.isEmpty()) return;
 
-        // Добавляем в историю ввода и сбрасываем индекс
         historyInputs.add(input);
         historyViewIndex = -1;
         historyIndex = -1;
@@ -97,13 +93,11 @@ public class CommandPage extends VBox {
         String cmdName = parts[0];
         Map<String, Object> args = new LinkedHashMap<>();
         if (parts.length > 1) {
-            // Аргументы пока кладём только для одиночных параметров
             args.put("arg1", parts[1]);
         }
 
         I18nManager i18n = I18nManager.getInstance();
 
-        // Команды, требующие диалога ввода параметров
         switch (cmdName) {
             case "add", "add_if_max", "add_if_min" -> {
                 TicketDialog dialog = new TicketDialog(null);
@@ -115,7 +109,6 @@ public class CommandPage extends VBox {
                 return;
             }
             case "update" -> {
-                // Нужен id объекта
                 if (parts.length < 2) {
                     addHistory(i18n.getString("error.update") + " ID не указан");
                     return;
@@ -128,7 +121,6 @@ public class CommandPage extends VBox {
                     addHistory(i18n.getString("error.update") + " некорректный ID");
                     return;
                 }
-                // Ищем объект в текущем списке
                 Optional<Map<String, Object>> optTicket = currentTickets.stream()
                         .filter(t -> Long.valueOf(t.get("id").toString()) == id)
                         .findFirst();
@@ -139,18 +131,17 @@ public class CommandPage extends VBox {
                 Map<String, Object> oldData = optTicket.get();
                 TicketDialog dialog = new TicketDialog(oldData);
                 dialog.showAndWait().ifPresent(newData -> {
-                    newData.put("arg1", idStr); // для серверной команды update
+                    newData.put("arg1", idStr);
                     CommandRequest request = new CommandRequest("update", newData,
                             client.getCurrentLogin(), client.getCurrentPassword());
                     sendRequest(request, input);
                 });
                 return;
             }
-            // Специальные команды, которые нужно обработать локально
             case "fetch" -> {
                 CommandRequest request = new CommandRequest("fetch", null,
                         client.getCurrentLogin(), client.getCurrentPassword());
-                sendRequest(request, input, true); // передаём флаг, что нужно показать количество
+                sendRequest(request, input, true);
                 return;
             }
             case "whoami" -> {
@@ -169,7 +160,6 @@ public class CommandPage extends VBox {
             }
         }
 
-        // Остальные команды – отправляем как есть
         CommandRequest request = new CommandRequest(cmdName, args.isEmpty() ? null : args,
                 client.getCurrentLogin(), client.getCurrentPassword());
         sendRequest(request, input);
@@ -179,40 +169,12 @@ public class CommandPage extends VBox {
         sendRequest(request, userInput, false);
     }
 
-//    private void sendRequest(CommandRequest request, String userInput, boolean isFetchOrWhoami) {
-//        new Thread(() -> {
-//            try {
-//                CommandResponse resp = client.sendRequest(request);
-//                Platform.runLater(() -> {
-//                    if (isFetchOrWhoami) {
-//                        if (resp.getData() instanceof List<?> list) {
-//                            addHistory( i18n.getString("command.fetch.result")+ " " + list.size());
-//                        } else if (resp.getData() instanceof Integer uid) {
-//                            addHistory( i18n.getString("command.whoami.result")+ " " + uid);
-//                        } else {
-//                            addHistory(resp.getString());
-//                        }
-//                    } else {
-//                        addHistory(localizeServerResponse(resp.getString()));
-//                    }
-//                    commandField.clear();
-//                    if (isModifyingCommand(request.getName())) {
-//                        refreshCallbacks.forEach(Runnable::run);
-//                    }
-//                    addHistory("> " + userInput);
-//                });
-//            } catch (Exception e) {
-//                Platform.runLater(() -> addHistory("Ошибка: " + e.getMessage()));
-//            }
-//        }).start();
-//    }
-
     private void sendRequest(CommandRequest request, String userInput, boolean isFetchOrWhoami) {
         new Thread(() -> {
             try {
                 CommandResponse resp = client.sendRequest(request);
                 Platform.runLater(() -> {
-                    addHistory(localizeServerResponse(resp.getString())); // ответ
+                    addHistory(localizeServerResponse(resp.getString()));
                     addHistory("> " + userInput);                         // команда
                     commandField.clear();
                     if (isModifyingCommand(request.getName())) {
@@ -268,12 +230,10 @@ public class CommandPage extends VBox {
                 Map<String, Object> args = new LinkedHashMap<>();
                 if (tokens.length > 1) args.put("arg1", tokens[1]);
 
-                // Команды, требующие GUI-ввода, пропускаем с предупреждением
                 if (Set.of("add", "add_if_max", "add_if_min", "update").contains(cmd)) {
                     addHistory(i18n.getString("script.warning.gui_required") + " " + cmd);
                     continue;
                 }
-                // execute_script внутри скрипта пока не поддерживаем (во избежание рекурсии)
                 if (cmd.equals("execute_script")) {
                     addHistory(i18n.getString("script.warning.recursion") + " " + line);
                     continue;
@@ -281,7 +241,6 @@ public class CommandPage extends VBox {
 
                 CommandRequest request = new CommandRequest(cmd, args.isEmpty() ? null : args,
                         client.getCurrentLogin(), client.getCurrentPassword());
-                // Синхронная отправка, чтобы сохранить порядок вывода
                 CommandResponse resp = client.sendRequest(request);
                 addHistory("> " + line);
                 addHistory(localizeServerResponse(resp.getString()));
@@ -297,21 +256,16 @@ public class CommandPage extends VBox {
         }
     }
 
-    // ================== НАВИГАЦИЯ ==================
     private void navigateHistory(int direction) {
         if (historyInputs.isEmpty()) return;
 
-        // direction = 1 (UP) – идём к более старым записям (ниже в списке)
-        // direction = -1 (DOWN) – идём к более новым (выше)
         String currentText = commandField.getText().trim();
 
-        if (direction > 0) { // UP
-            // Если мы не в режиме навигации – берём последнюю введённую команду
+        if (direction > 0) {
             if (historyIndex == -1) {
                 historyIndex = historyInputs.size() - 1;
                 currentText = historyInputs.get(historyIndex);
             }
-            // Ищем строку в historyView, начиная с historyViewIndex + 1
             int start = (historyViewIndex == -1) ? 0 : historyViewIndex + 1;
             int found = -1;
             String prefix = "> " + currentText;
@@ -325,18 +279,14 @@ public class CommandPage extends VBox {
                 historyViewIndex = found;
                 historyView.getSelectionModel().select(found);
                 historyView.scrollTo(found);
-                // Устанавливаем текст в поле ввода (если изменилась команда)
                 navigating = true;
                 commandField.setText(currentText);
                 commandField.positionCaret(currentText.length());
                 navigating = false;
             } else {
-                // нет больше вхождений – сдвигаем historyIndex ещё дальше в прошлое,
-                // если возможно, и пробуем найти с начала
                 if (historyIndex > 0) {
                     historyIndex--;
                     currentText = historyInputs.get(historyIndex);
-                    // ищем с начала списка
                     found = -1;
                     prefix = "> " + currentText;
                     for (int i = 0; i < historyList.size(); i++) {
@@ -354,14 +304,11 @@ public class CommandPage extends VBox {
                         commandField.positionCaret(currentText.length());
                         navigating = false;
                     }
-                    // else – не нашли, ничего не делаем
                 }
             }
-        } else { // DOWN
-            // Если мы не в навигации – некуда идти вперёд
+        } else {
             if (historyIndex == -1) return;
 
-            // Ищем строку выше (меньший индекс)
             int start = (historyViewIndex == -1) ? historyList.size() : historyViewIndex - 1;
             int found = -1;
             String prefix = "> " + currentText;
@@ -376,8 +323,6 @@ public class CommandPage extends VBox {
                 historyView.getSelectionModel().select(found);
                 historyView.scrollTo(found);
             } else {
-                // Больше нет более новых – сдвигаемся к более новой команде в historyInputs,
-                // если есть, и ищем её начиная с конца списка
                 if (historyIndex < historyInputs.size() - 1) {
                     historyIndex++;
                     currentText = historyInputs.get(historyIndex);
@@ -398,14 +343,12 @@ public class CommandPage extends VBox {
                         commandField.positionCaret(currentText.length());
                         navigating = false;
                     } else {
-                        // не нашли – выходим из режима навигации
                         historyIndex = -1;
                         historyViewIndex = -1;
                         commandField.clear();
                         historyView.getSelectionModel().clearSelection();
                     }
                 } else {
-                    // это самая новая команда – выходим из режима навигации
                     historyIndex = -1;
                     historyViewIndex = -1;
                     commandField.clear();

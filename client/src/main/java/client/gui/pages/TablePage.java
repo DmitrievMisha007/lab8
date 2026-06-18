@@ -5,7 +5,6 @@ import client.gui.components.TicketDialog;
 import client.i18n.I18nManager;
 import core.CommandRequest;
 import javafx.application.Platform;
-import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.*;
@@ -75,7 +74,6 @@ public class TablePage extends VBox {
                 commentCol, refundCol, typeCol, eventTicketsCol, eventTypeCol, eventNameCol, userIdCol);
         tableView.setItems(data);
 
-        // Создаём меню один раз
         contextMenu = new ContextMenu();
         contextMenu.setMinWidth(150);
         MenuItem editItem = new MenuItem("Редактировать");
@@ -94,13 +92,10 @@ public class TablePage extends VBox {
 
         contextMenu.getItems().addAll(editItem, deleteItem);
 
-// Устанавливаем меню через обработчик запроса контекстного меню
         tableView.setRowFactory(tv -> {
             TableRow<Map<String, Object>> row = new TableRow<>();
             row.setOnContextMenuRequested(event -> {
-                // Выделяем строку, на которой произошёл правый клик
                 row.getTableView().getSelectionModel().select(row.getIndex());
-                // Показываем меню, только если объект принадлежит текущему пользователю
                 Map<String, Object> item = row.getItem();
                 if (item != null && (Integer) item.get("userId") == client.getCurrentUserId()) {
                     contextMenu.show(row, event.getScreenX(), event.getScreenY());
@@ -110,7 +105,6 @@ public class TablePage extends VBox {
             return row;
         });
 
-// Применяем начальную локализацию
         updateContextMenuText();
 
         getChildren().addAll(filterField, tableView);

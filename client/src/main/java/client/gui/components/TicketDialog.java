@@ -4,23 +4,22 @@ import client.i18n.I18nManager;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
-import javafx.util.Pair;
 
 import java.util.*;
 
 public class TicketDialog extends Dialog<Map<String, Object>> {
-    private TextField nameField = new TextField();
-    private TextField xField = new TextField();
-    private TextField yField = new TextField();
-    private TextField priceField = new TextField();
-    private TextField commentField = new TextField();
-    private CheckBox refundableBox = new CheckBox();
-    private ComboBox<String> typeCombo = new ComboBox<>();
-    private CheckBox hasEventBox = new CheckBox();
-    private TextField eventNameField = new TextField();
-    private TextField eventTicketsField = new TextField();
-    private ComboBox<String> eventTypeCombo = new ComboBox<>();
-    private I18nManager i18n = I18nManager.getInstance();
+    private final TextField nameField = new TextField();
+    private final TextField xField = new TextField();
+    private final TextField yField = new TextField();
+    private final TextField priceField = new TextField();
+    private final TextField commentField = new TextField();
+    private final CheckBox refundableBox = new CheckBox();
+    private final ComboBox<String> typeCombo = new ComboBox<>();
+    private final CheckBox hasEventBox = new CheckBox();
+    private final TextField eventNameField = new TextField();
+    private final TextField eventTicketsField = new TextField();
+    private final ComboBox<String> eventTypeCombo = new ComboBox<>();
+    private final I18nManager i18n = I18nManager.getInstance();
 
     private Map<String, Object> initialData;
 
@@ -37,7 +36,6 @@ public class TicketDialog extends Dialog<Map<String, Object>> {
         grid.setVgap(10);
         grid.setPadding(new Insets(20));
 
-        // Поля
         grid.add(new Label(i18n.getString("dialog.field.name")), 0, 0);
         grid.add(nameField, 1, 0);
         grid.add(new Label(i18n.getString("dialog.field.x")), 0, 1);
@@ -71,7 +69,6 @@ public class TicketDialog extends Dialog<Map<String, Object>> {
         grid.add(new Label(i18n.getString("dialog.field.event.type")), 0, 10);
         grid.add(eventTypeCombo, 1, 10);
 
-        // Инициализация значений, если редактирование
         if (initialData != null) {
             nameField.setText((String) initialData.get("name"));
             xField.setText(String.valueOf(initialData.get("x")));
@@ -97,7 +94,6 @@ public class TicketDialog extends Dialog<Map<String, Object>> {
 
         getDialogPane().setContent(grid);
 
-        // Конвертация результата в Map при нажатии OK
         setResultConverter(dialogButton -> {
             if (dialogButton == okButtonType) {
                 return validateAndBuild();
@@ -150,7 +146,6 @@ public class TicketDialog extends Dialog<Map<String, Object>> {
         map.put("type", typeCombo.getValue());
 
         if (hasEventBox.isSelected()) {
-            // важно: ключ "event" со значением "yes" должен идти перед eventName/ticketCount/eventType
             map.put("event", "yes");
             String evName = eventNameField.getText().trim();
             if (evName.isEmpty()) {

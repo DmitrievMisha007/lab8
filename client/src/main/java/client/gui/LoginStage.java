@@ -27,7 +27,6 @@ public class LoginStage extends Stage {
         setTitle("Lab8 Client");
         initModality(Modality.APPLICATION_MODAL);
 
-        // Установка ключей локализации
         loginField.setUserData("login.label");
         passwordField.setUserData("password.label");
         loginButton.setUserData("button.login");
@@ -56,7 +55,6 @@ public class LoginStage extends Stage {
 
         setScene(new Scene(root));
 
-        // Применить начальную локализацию
         I18nManager.getInstance().updateAllTexts(getScene().getRoot());
         setTitle(I18nManager.getInstance().getString("title.login"));
     }
@@ -87,7 +85,6 @@ public class LoginStage extends Stage {
             } else {
                 client.setCredentials(login, password);
 
-                // Получение userId
                 Task<Integer> whoAmITask = new Task<>() {
                     @Override
                     protected Integer call() throws Exception {
